@@ -1,0 +1,360 @@
+;;; mathprog-ts-mode.el --- Major mode for MathProg -*- lexical-binding: t; -*-
+;;
+;; Author:           Stefan Möding <stm@kill-9.net>
+;; Maintainer:       Stefan Möding <stm@kill-9.net>
+;; Version:          0.1.0
+;; Created:          <2026-01-06 19:55:01 stm>
+;; Updated:          <2026-01-15 15:08:29 stm>
+;; URL:              https://github.com/smoeding/mathprog-ts-mode
+;; Keywords:         languages
+;; Package-Requires: ((emacs "29.1"))
+
+;; This file is NOT part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This package uses a Tree-sitter parser to provide syntax highlighting and
+;; navigation for the GNU MathProg modeling language.
+
+;; This file does not add any file name patterns to `auto-mode-alist' for
+;; the mode.  The often used file extension '.mod' for a MathProg model file
+;; is already used by Emacs for `m2-mode'.  You can either add the preferred
+;; file name pattern in your personal Emacs configuration or use file local
+;; variables to automatically enable the mode when visiting a model file.
+
+;; The package uses a Tree-sitter library to parse MathProg code and you
+;; need to install the appropriate parser.  This can be done by using this
+;; Elisp code:
+;;
+;;    (require 'mathprog-ts-mode)
+;;    (mathprog-ts-mode-install-grammar)
+;;
+;; Note that a C compiler is required for this step.  Using the function
+;; provided by the package ensures that a version of the parser matching the
+;; package will be installed.  These commands should also be used to update
+;; the parser to the correct version when the package is updated.
+
+;;; Code:
+
+
+;;; Library requirements
+
+(require 'treesit)
+
+(eval-when-compile
+  (require 'rx))
+
+
+;;; Customization
+
+(defgroup mathprog-ts nil
+  "Write GNU MathProg code in Emacs."
+  :prefix "mathprog-ts-"
+  :group 'languages
+  :link '(url-link :tag "Repository"
+                   "https://github.com/smoeding/mathprog-ts-mode"))
+
+
+;;; Internals
+
+(defconst mathprog-ts--keyword-regexp
+  (rx (seq bow
+           (or "and" "by" "cross" "diff" "div" "in" "inter" "less"
+               "mod" "not" "or" "symdiff" "union" "within")
+           eow))
+  "Regexp of reserved keywords used in MathProg.")
+
+(defconst mathprog-ts--statement-regexp
+  (rx (seq bow
+           (or "set" "param" "var" "constraint" "objective" "check"
+               "display" "printf" "for" "table" "solve" "end" "data"
+               "set_data" "param_data")
+           eow))
+  "Regexp of parser nodes that start a new statement.")
+
+(defconst mathprog-ts--attributes
+  '("default" "dimen" "within" "in"
+    "integer" "binary" "logical" "symbolic")
+  "List of attributes used for MathProg sets, parameters and variables.")
+
+
+;;; Faces
+
+(defface mathprog-ts-comment
+  '((t :inherit font-lock-comment-face))
+  "Face used for comments in MathProg."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-string
+  '((t :inherit font-lock-string-face))
+  "Face used for strings."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-number
+  '((t :inherit font-lock-number-face))
+  "Face used for numbers."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-datavalue
+  '((t :inherit font-lock-constant-face))
+  "Face used for unquoted values in the data section."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-statement
+  '((t :inherit font-lock-preprocessor-face))
+  "Face used for MathProg model declaration and functional statements."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-iterated-operator
+  '((t :inherit font-lock-builtin-face))
+  "Face used for operators in iterated expressions.")
+
+(defface mathprog-ts-keyword
+  '((t :inherit font-lock-keyword-face))
+  "Face used for MathProg keywords."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-attribute
+  '((t :inherit font-lock-type-face))
+  "Face used for attribute types."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-variable-name
+  '((t :inherit font-lock-variable-name-face))
+  "Face used for the name of a MathProg variable."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-variable-use
+  '((t :inherit font-lock-variable-use-face))
+  "Face used for the name of a MathProg variable being referenced."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-function-call
+  '((t :inherit font-lock-function-call-face))
+  "Face used for the name of a function being called in MathProg."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-operator
+  '((t :inherit font-lock-operator-face))
+  "Face used for MathProg operators."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-negation-char
+  '((t :inherit font-lock-negation-char-face))
+  "Face used for negation characters in MathProg."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-suffix
+  '((t :inherit font-lock-property-use-face))
+  "Face used for object suffixes in MathProg."
+  :group 'mathprog-ts)
+
+(defface mathprog-ts-warning
+  '((t :inherit font-lock-warning-face))
+  "Face used for language errors found by the parser."
+  :group 'mathprog-ts)
+
+
+;;; Font-Lock
+
+(defvar mathprog-ts-mode-feature-list
+  ;; Level 1 usually contains only comments and definitions.
+  ;; Level 2 usually adds keywords, strings, data types, etc.
+  ;; Level 3 usually represents full-blown fontifications, including
+  ;; assignments, constants, numbers and literals, etc.
+  ;; Level 4 adds everything else that can be fontified: delimiters,
+  ;; operators, brackets, punctuation, all functions, properties,
+  ;; variables, etc.
+  '((comment)
+    (keyword string builtin)
+    (number datavalue function attribute variable suffix)
+    (operator error))
+  "`treesit-font-lock-feature-list' for `mathprog-ts-mode'.")
+
+(defvar mathprog-ts-mode-font-lock-settings
+  `( ;;
+    :feature comment
+    :language mathprog
+    ((comment) @mathprog-ts-comment)
+
+    :feature string
+    :language mathprog
+    ((string) @mathprog-ts-string)
+
+    :feature number
+    :language mathprog
+    ((number) @mathprog-ts-number)
+
+    :feature datavalue
+    :language mathprog
+    ((bareword) @mathprog-ts-datavalue)
+
+    :feature keyword
+    :language mathprog
+    (((operator) @mathprog-ts-keyword
+      (:match ,mathprog-ts--keyword-regexp @mathprog-ts-keyword))
+     ((conditional_expression ["if" "then" "else"] @mathprog-ts-keyword)))
+
+    :feature builtin
+    :language mathprog
+    ((set "set" @mathprog-ts-statement)
+     (param "param" @mathprog-ts-statement)
+     (var "var" @mathprog-ts-statement)
+     (constraint ["s.t." "subj" "subject" "to"] @mathprog-ts-statement)
+     (objective ["maximize" "minimize"] @mathprog-ts-statement)
+     (solve "solve" @mathprog-ts-statement)
+     (check "check" @mathprog-ts-statement)
+     (display "display" @mathprog-ts-statement)
+     (printf "printf" @mathprog-ts-statement)
+     (for "for" @mathprog-ts-statement)
+     (table "table" @mathprog-ts-statement)
+     (end "end" @mathprog-ts-statement)
+     (data "data" @mathprog-ts-statement)
+     (set_data "set" @mathprog-ts-statement)
+     (param_data "param" @mathprog-ts-statement)
+     (iterated_expression (operator) @mathprog-ts-iterated-operator))
+
+    :feature function
+    :language mathprog
+    ((function_name) @mathprog-ts-function-call)
+
+    :feature attribute
+    :language mathprog
+    ((attribute [,@mathprog-ts--attributes] @mathprog-ts-attribute))
+
+    :feature suffix
+    :language mathprog
+    ((suffix) @mathprog-ts-suffix)
+
+    :feature variable
+    :language mathprog
+    (((model_object) @mathprog-ts-variable-name)
+     ((symbolic_name) @mathprog-ts-variable-use))
+
+    :feature operator
+    :language mathprog
+    (((operator) @mathprog-ts-negation-char
+      (:match "!" @mathprog-ts-negation-char))
+     ((operator) @mathprog-ts-operator))
+
+    :feature error
+    :language mathprog
+    :override t
+    ((ERROR) @mathprog-ts-warning)))
+
+
+;; Language grammar
+
+(defconst mathprog-ts-mode-treesit-language-source
+  '(mathprog . ("https://github.com/smoeding/tree-sitter-mathprog" "v1.0.0"))
+  "The language source entry for the associated MathProg language parser.
+The value refers to the specific version of the parser that the mode has
+been tested with.  Using this mode with either an older or more recent
+version of the parser might not work as expected.")
+
+(defun mathprog-ts-mode-install-grammar ()
+  "Install the language grammar for `mathprog-ts-mode'.
+The function removes existing entries for the MathProg language in
+`treesit-language-source-alist' and adds the entry stored in
+`mathprog-ts-mode-treesit-language-source'."
+  (interactive)
+  ;; Remove existing entries
+  (setq treesit-language-source-alist
+        (assq-delete-all 'mathprog treesit-language-source-alist))
+  ;; Add the correct entry
+  (add-to-list 'treesit-language-source-alist
+               mathprog-ts-mode-treesit-language-source)
+  ;; Install the grammar
+  (treesit-install-language-grammar 'mathprog))
+
+
+;;; Major mode definition
+
+(defvar mathprog-ts-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    ;; our strings
+    (modify-syntax-entry ?\' "\"'"  table)
+    (modify-syntax-entry ?\" "\"\"" table)
+    ;; C-style comments
+    (modify-syntax-entry ?/  ". 14" table)
+    (modify-syntax-entry ?*  ". 23" table)
+    ;; line comments
+    (modify-syntax-entry ?#  "<"  table)
+    (modify-syntax-entry ?\n ">#" table)
+    ;; the backslash is our escape character
+    (modify-syntax-entry ?\\ "\\" table)
+    ;; various operators and punctionation
+    (modify-syntax-entry ?$  "." table)
+    (modify-syntax-entry ?%  "." table)
+    (modify-syntax-entry ?&  "." table)
+    (modify-syntax-entry ?+  "." table)
+    (modify-syntax-entry ?-  "." table)
+    (modify-syntax-entry ?<  "." table)
+    (modify-syntax-entry ?=  "." table)
+    (modify-syntax-entry ?>  "." table)
+    (modify-syntax-entry ?|  "." table)
+    (modify-syntax-entry ?\; "." table)
+    table)
+  "Syntax table used in `mathprog-ts-mode' buffers.")
+
+(defvar mathprog-ts-mode-map
+  (let ((map (make-sparse-keymap)))
+    map)
+  "Keymap for MathProg mode buffers.")
+
+;;;###autoload
+(define-derived-mode mathprog-ts-mode prog-mode "MathProg"
+  "Major mode for editing GNU MathProg files using Tree-sitter.
+
+The mode needs the Tree-sitter parser for MathProg code.  A parser
+suitable for the current package version can be installed using the
+function `mathprog-ts-mode-install-grammar'.  Some development tools
+like a C compiler are required for this.  The constant
+`mathprog-ts-mode-treesit-language-source' contains the location and
+version of the parser that should be used for the present release of the
+mode.
+
+Fontification depends on the concrete syntax tree returned by the
+Tree-sitter parser.  Syntax errors like a missing closing parenthesis or
+bracket can lead to missing fontification.  This is easily resolved by
+fixing the particular syntax error.
+
+\\{mathprog-ts-mode-map}"
+  (setq-local require-final-newline mode-require-final-newline)
+
+  ;; Comments
+  (setq-local comment-start      "#"
+              comment-end        ""
+              comment-start-skip "#+\\s-*")
+
+  ;; Tree-sitter
+  (when (treesit-ready-p 'mathprog)
+    (treesit-parser-create 'mathprog)
+
+    ;; Navigation
+    (setq treesit-defun-type-regexp mathprog-ts--statement-regexp)
+
+    ;; Font-Lock
+    (setq treesit-font-lock-feature-list mathprog-ts-mode-feature-list
+          treesit-font-lock-settings
+          (apply #'treesit-font-lock-rules
+                 mathprog-ts-mode-font-lock-settings))
+
+    (treesit-major-mode-setup)))
+
+(provide 'mathprog-ts-mode)
+
+;;; mathprog-ts-mode.el ends here
