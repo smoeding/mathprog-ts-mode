@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-21 12:56:32 stm>
+;; Updated:          <2026-02-21 12:58:26 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -70,6 +70,18 @@
   :group 'languages
   :link '(url-link :tag "Repository"
                    "https://github.com/smoeding/mathprog-ts-mode"))
+
+(defcustom mathprog-ts-indent-level 2
+  "Number of spaces for each indententation step."
+  :group 'mathprog-ts
+  :type 'integer
+  :safe 'integerp)
+
+(defcustom mathprog-ts-indent-tabs-mode nil
+  "Indentation can insert tabs in MathProg mode if this is non-nil."
+  :group 'mathprog-ts
+  :type 'boolean
+  :safe 'booleanp)
 
 
 ;;; Internals
@@ -343,6 +355,10 @@ fixing the particular syntax error.
   (setq-local comment-start      "#"
               comment-end        ""
               comment-start-skip "#+\\s-*")
+
+  ;; Indentation
+  (setq tab-width        mathprog-ts-indent-level
+        indent-tabs-mode mathprog-ts-indent-tabs-mode)
 
   ;; Tree-sitter
   (when (treesit-ready-p 'mathprog)
