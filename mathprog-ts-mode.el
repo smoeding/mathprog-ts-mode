@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-21 12:58:26 stm>
+;; Updated:          <2026-02-22 12:50:32 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -72,7 +72,7 @@
                    "https://github.com/smoeding/mathprog-ts-mode"))
 
 (defcustom mathprog-ts-indent-level 2
-  "Number of spaces for each indententation step."
+  "Number of spaces for each indentation step."
   :group 'mathprog-ts
   :type 'integer
   :safe 'integerp)
@@ -312,7 +312,7 @@ The function removes existing entries for the MathProg language in
     (modify-syntax-entry ?\n ">#" table)
     ;; the backslash is our escape character
     (modify-syntax-entry ?\\ "\\" table)
-    ;; various operators and punctionation
+    ;; various operators and punctuation
     (modify-syntax-entry ?$  "." table)
     (modify-syntax-entry ?%  "." table)
     (modify-syntax-entry ?&  "." table)
@@ -338,10 +338,10 @@ The function removes existing entries for the MathProg language in
 The mode needs the Tree-sitter parser for MathProg code.  A parser
 suitable for the current package version can be installed using the
 function `mathprog-ts-mode-install-grammar'.  Some development tools
-like a C compiler are required for this.  The constant
-`mathprog-ts-mode-treesit-language-source' contains the location and
-version of the parser that should be used for the present release of the
-mode.
+like a C compiler are required for this.
+The constant `mathprog-ts-mode-treesit-language-source' contains the
+location and version of the parser that should be used for the present
+release of the mode.
 
 Fontification depends on the concrete syntax tree returned by the
 Tree-sitter parser.  Syntax errors like a missing closing parenthesis or
