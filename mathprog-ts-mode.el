@@ -1,10 +1,10 @@
-;;; mathprog-ts-mode.el --- Major mode for MathProg -*- lexical-binding: t; -*-
+;;; mathprog-ts-mode.el --- Major mode for the GNU MathProg modeling language -*- lexical-binding: t; -*-
 ;;
 ;; Author:           Stefan Möding <stm@kill-9.net>
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-01-15 15:08:29 stm>
+;; Updated:          <2026-02-21 12:56:32 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -26,18 +26,22 @@
 
 ;;; Commentary:
 
+;; GNU MathProg is a modeling language to describe optimization problems
+;; using linear programming (LP) and mixed integer programming (MIP) models.
 ;; This package uses a Tree-sitter parser to provide syntax highlighting and
-;; navigation for the GNU MathProg modeling language.
+;; navigation for the MathProg language used by the GNU Linear Programming
+;; Kit (GLPK).
 
-;; This file does not add any file name patterns to `auto-mode-alist' for
-;; the mode.  The often used file extension '.mod' for a MathProg model file
-;; is already used by Emacs for `m2-mode'.  You can either add the preferred
+;; The mode does not add any file name patterns to `auto-mode-alist'.
+;; Usually the file extension '.mod' is used for a MathProg model file, but
+;; that is already occupied for `m2-mode'.  You can either add the preferred
 ;; file name pattern in your personal Emacs configuration or use file local
 ;; variables to automatically enable the mode when visiting a model file.
 
 ;; The package uses a Tree-sitter library to parse MathProg code and you
-;; need to install the appropriate parser.  This can be done by using this
-;; Elisp code:
+;; need to install the appropriate parser (which is defined by the constant
+;; `mathprog-ts-mode-treesit-language-source').  This can for example be
+;; done by using this Elisp code:
 ;;
 ;;    (require 'mathprog-ts-mode)
 ;;    (mathprog-ts-mode-install-grammar)
@@ -50,7 +54,7 @@
 ;;; Code:
 
 
-;;; Library requirements
+;;; Requirements
 
 (require 'treesit)
 
@@ -61,7 +65,7 @@
 ;;; Customization
 
 (defgroup mathprog-ts nil
-  "Write GNU MathProg code in Emacs."
+  "Write linear programming problems using MathProg in Emacs."
   :prefix "mathprog-ts-"
   :group 'languages
   :link '(url-link :tag "Repository"
@@ -83,7 +87,7 @@
                "display" "printf" "for" "table" "solve" "end" "data"
                "set_data" "param_data")
            eow))
-  "Regexp of parser nodes that start a new statement.")
+  "Regexp of parser nodes that start a new MathProg statement.")
 
 (defconst mathprog-ts--attributes
   '("default" "dimen" "within" "in"
