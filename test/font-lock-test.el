@@ -4,7 +4,7 @@
 
 ;; Author: Stefan Möding
 ;; Created: <2025-01-03 09:45:33 stm>
-;; Updated: <2026-01-20 15:03:59 stm>
+;; Updated: <2026-02-22 19:26:48 stm>
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -40,20 +40,31 @@
 
 ;;; Set
 
-(ert-deftest fontify/set ()
-  (mathprog-test-with-temp-buffer "set nodes;"
-    (should (eq (mathprog-test-face-at 1) 'mathprog-ts-statement))
-    (should (eq (mathprog-test-face-at 5) 'mathprog-ts-variable-name))))
+(ert-deftest fontify/set-operator-union ()
+  (mathprog-test-with-temp-buffer "set Z := X union Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
 
-(ert-deftest fontify/set-with-superset ()
-  (mathprog-test-with-temp-buffer "set arcs within nodes cross nodes;"
-    (should (eq (mathprog-test-face-at 1) 'mathprog-ts-statement))
-    (should (eq (mathprog-test-face-at 5) 'mathprog-ts-variable-name))
-    (should (eq (mathprog-test-face-at 10) 'mathprog-ts-attribute))
-    (should (eq (mathprog-test-face-at 17) 'mathprog-ts-variable-use))
-    (should (eq (mathprog-test-face-at 23) 'mathprog-ts-keyword))))
+(ert-deftest fontify/set-operator-diff ()
+  (mathprog-test-with-temp-buffer "set Z := X diff Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
 
-(ert-deftest fontify/set-with-setof-condition ()
+(ert-deftest fontify/set-operator-symdiff ()
+  (mathprog-test-with-temp-buffer "set Z := X symdiff Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
+
+(ert-deftest fontify/set-operator-cross ()
+  (mathprog-test-with-temp-buffer "set Z := X cross Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
+
+(ert-deftest fontify/set-operator-inter ()
+  (mathprog-test-with-temp-buffer "set Z := X inter Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
+
+(ert-deftest fontify/set-operator-within ()
+  (mathprog-test-with-temp-buffer "set Z := X within Y;"
+    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
+
+(ert-deftest fontify/set-operator-setof ()
   (mathprog-test-with-temp-buffer "set C := setof{a in A, b in B[a]} b;"
     (should (eq (mathprog-test-face-at 1) 'mathprog-ts-statement))
     (should (eq (mathprog-test-face-at 5) 'mathprog-ts-variable-name))
@@ -70,39 +81,52 @@
 
 (ert-deftest fontify/number-integer ()
   (mathprog-test-with-temp-buffer "param x := 42;"
-    (should (eq (mathprog-test-face-at 13) 'mathprog-ts-number))))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-number-face))))
 
 (ert-deftest fontify/number-float ()
   (mathprog-test-with-temp-buffer "param x := 4.2;"
-    (should (eq (mathprog-test-face-at 13) 'mathprog-ts-number))))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-number-face))))
 
 (ert-deftest fontify/number-scientific ()
   (mathprog-test-with-temp-buffer "param x := 4.2e12;"
-    (should (eq (mathprog-test-face-at 13) 'mathprog-ts-number))
-    (should (eq (mathprog-test-face-at 14) 'mathprog-ts-number))
-    (should (eq (mathprog-test-face-at 15) 'mathprog-ts-number))
-    (should (eq (mathprog-test-face-at 16) 'mathprog-ts-number))))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-number-face))
+    (should (eq (mathprog-test-face-at 14) 'font-lock-number-face))
+    (should (eq (mathprog-test-face-at 15) 'font-lock-number-face))
+    (should (eq (mathprog-test-face-at 16) 'font-lock-number-face))))
 
 (ert-deftest fontify/number-negative ()
   (mathprog-test-with-temp-buffer "param x := -42;"
-    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-number))
-    (should (eq (mathprog-test-face-at 13) 'mathprog-ts-number))))
+    (should (eq (mathprog-test-face-at 12) 'font-lock-number-face))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-number-face))))
+
+
+;;; String
+
+(ert-deftest fontify/string-single-quoted ()
+  (mathprog-test-with-temp-buffer "param x := 'foo';"
+    (should (eq (mathprog-test-face-at 12) 'font-lock-string-face))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-string-face))))
+
+(ert-deftest fontify/string-double-quoted ()
+  (mathprog-test-with-temp-buffer "param x := \"foo\";"
+    (should (eq (mathprog-test-face-at 12) 'font-lock-string-face))
+    (should (eq (mathprog-test-face-at 13) 'font-lock-string-face))))
 
 
 ;;; Comments
 
 (ert-deftest fontify/comment-one-line ()
   (mathprog-test-with-temp-buffer "# comment"
-    (should (eq (mathprog-test-face-at 1) 'mathprog-ts-comment))
-    (should (eq (mathprog-test-face-at 3) 'mathprog-ts-comment))))
+    (should (eq (mathprog-test-face-at 1) 'font-lock-comment-face))
+    (should (eq (mathprog-test-face-at 3) 'font-lock-comment-face))))
 
 (ert-deftest fontify/comment-multiple-lines ()
   (mathprog-test-with-temp-buffer "/*\n*\n*/"
-    (should (eq (mathprog-test-face-at 1) 'mathprog-ts-comment))
-    (should (eq (mathprog-test-face-at 2) 'mathprog-ts-comment))
-    (should (eq (mathprog-test-face-at 4) 'mathprog-ts-comment))
-    (should (eq (mathprog-test-face-at 5) 'mathprog-ts-comment))
-    (should (eq (mathprog-test-face-at 6) 'mathprog-ts-comment))))
+    (should (eq (mathprog-test-face-at 1) 'font-lock-comment-face))
+    (should (eq (mathprog-test-face-at 2) 'font-lock-comment-face))
+    (should (eq (mathprog-test-face-at 4) 'font-lock-comment-face))
+    (should (eq (mathprog-test-face-at 5) 'font-lock-comment-face))
+    (should (eq (mathprog-test-face-at 6) 'font-lock-comment-face))))
 
 
 ;;; Statements
@@ -177,6 +201,7 @@ param month := Jan;"
     (should (eq (mathprog-test-face-at 1) 'mathprog-ts-statement))
     (should (eq (mathprog-test-face-at 7) 'mathprog-ts-statement))))
 
+
 ;;; Values
 
 (ert-deftest fontify/data-values ()
@@ -184,9 +209,9 @@ param month := Jan;"
 param value := iron -.1, \"nickel\" .02;"
     (should (eq (mathprog-test-face-at 13) 'mathprog-ts-variable-name))
     (should (eq (mathprog-test-face-at 22) 'mathprog-ts-datavalue))
-    (should (eq (mathprog-test-face-at 27) 'mathprog-ts-number))
-    (should (eq (mathprog-test-face-at 33) 'mathprog-ts-string))
-    (should (eq (mathprog-test-face-at 42) 'mathprog-ts-number))))
+    (should (eq (mathprog-test-face-at 27) 'font-lock-number-face))
+    (should (eq (mathprog-test-face-at 33) 'font-lock-string-face))
+    (should (eq (mathprog-test-face-at 42) 'font-lock-number-face))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

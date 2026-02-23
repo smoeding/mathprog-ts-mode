@@ -109,21 +109,6 @@
 
 ;;; Faces
 
-(defface mathprog-ts-comment
-  '((t :inherit font-lock-comment-face))
-  "Face used for comments in MathProg."
-  :group 'mathprog-ts)
-
-(defface mathprog-ts-string
-  '((t :inherit font-lock-string-face))
-  "Face used for strings."
-  :group 'mathprog-ts)
-
-(defface mathprog-ts-number
-  '((t :inherit font-lock-number-face))
-  "Face used for numbers."
-  :group 'mathprog-ts)
-
 (defface mathprog-ts-datavalue
   '((t :inherit font-lock-constant-face))
   "Face used for unquoted values in the data section."
@@ -168,19 +153,9 @@
   "Face used for MathProg operators."
   :group 'mathprog-ts)
 
-(defface mathprog-ts-negation-char
-  '((t :inherit font-lock-negation-char-face))
-  "Face used for negation characters in MathProg."
-  :group 'mathprog-ts)
-
 (defface mathprog-ts-suffix
   '((t :inherit font-lock-property-use-face))
   "Face used for object suffixes in MathProg."
-  :group 'mathprog-ts)
-
-(defface mathprog-ts-warning
-  '((t :inherit font-lock-warning-face))
-  "Face used for language errors found by the parser."
   :group 'mathprog-ts)
 
 
@@ -204,15 +179,15 @@
   `( ;;
     :feature comment
     :language mathprog
-    ((comment) @mathprog-ts-comment)
+    ((comment) @font-lock-comment-face)
 
     :feature string
     :language mathprog
-    ((string) @mathprog-ts-string)
+    ((string) @font-lock-string-face)
 
     :feature number
     :language mathprog
-    ((number) @mathprog-ts-number)
+    ((number) @font-lock-number-face)
 
     :feature datavalue
     :language mathprog
@@ -262,8 +237,8 @@
 
     :feature operator
     :language mathprog
-    (((operator) @mathprog-ts-negation-char
-      (:match "!" @mathprog-ts-negation-char))
+    (((operator) @font-lock-negation-char-face
+      (:match "!" @font-lock-negation-char-face))
      ((operator) @mathprog-ts-operator))
 
     :feature error
