@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-22 12:50:32 stm>
+;; Updated:          <2026-02-23 15:57:56 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -86,14 +86,14 @@
 
 ;;; Internals
 
-(defconst mathprog-ts--keyword-regexp
+(defconst mathprog-ts--keywords-regexp
   (rx (seq bow
            (or "and" "by" "cross" "diff" "div" "in" "inter" "less"
                "mod" "not" "or" "symdiff" "union" "within")
            eow))
   "Regexp of reserved keywords used in MathProg.")
 
-(defconst mathprog-ts--statement-regexp
+(defconst mathprog-ts--statements-regexp
   (rx (seq bow
            (or "set" "param" "var" "constraint" "objective" "check"
                "display" "printf" "for" "table" "solve" "end" "data"
@@ -193,10 +193,14 @@
     :language mathprog
     ((bareword) @mathprog-ts-datavalue)
 
+    :feature attribute
+    :language mathprog
+    ((attribute [,@mathprog-ts--attributes] @mathprog-ts-attribute))
+
     :feature keyword
     :language mathprog
     (((operator) @mathprog-ts-keyword
-      (:match ,mathprog-ts--keyword-regexp @mathprog-ts-keyword))
+      (:match ,mathprog-ts--keywords-regexp @mathprog-ts-keyword))
      ((conditional_expression ["if" "then" "else"] @mathprog-ts-keyword)))
 
     :feature builtin
@@ -221,10 +225,6 @@
     :feature function
     :language mathprog
     ((function_name) @mathprog-ts-function-call)
-
-    :feature attribute
-    :language mathprog
-    ((attribute [,@mathprog-ts--attributes] @mathprog-ts-attribute))
 
     :feature suffix
     :language mathprog
@@ -340,7 +340,7 @@ fixing the particular syntax error.
     (treesit-parser-create 'mathprog)
 
     ;; Navigation
-    (setq treesit-defun-type-regexp mathprog-ts--statement-regexp)
+    (setq treesit-defun-type-regexp mathprog-ts--statements-regexp)
 
     ;; Font-Lock
     (setq treesit-font-lock-feature-list mathprog-ts-mode-feature-list

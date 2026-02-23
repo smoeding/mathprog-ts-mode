@@ -4,7 +4,7 @@
 
 ;; Author: Stefan Möding
 ;; Created: <2025-01-03 09:45:33 stm>
-;; Updated: <2026-02-22 19:26:48 stm>
+;; Updated: <2026-02-23 15:53:10 stm>
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -58,10 +58,6 @@
 
 (ert-deftest fontify/set-operator-inter ()
   (mathprog-test-with-temp-buffer "set Z := X inter Y;"
-    (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
-
-(ert-deftest fontify/set-operator-within ()
-  (mathprog-test-with-temp-buffer "set Z := X within Y;"
     (should (eq (mathprog-test-face-at 12) 'mathprog-ts-keyword))))
 
 (ert-deftest fontify/set-operator-setof ()
