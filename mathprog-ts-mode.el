@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-25 12:42:06 stm>
+;; Updated:          <2026-02-25 12:57:02 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -54,7 +54,7 @@
 ;;; Code:
 
 
-;;; Requirements
+;;;; Requirements
 
 (require 'treesit)
 
@@ -62,7 +62,7 @@
   (require 'rx))
 
 
-;;; Customization
+;;;; Customization
 
 (defgroup mathprog-ts nil
   "Write linear programming problems using MathProg in Emacs."
@@ -96,7 +96,7 @@
   :local t)
 
 
-;;; Internals
+;;;; Internals
 
 (defconst mathprog-ts--keywords-regexp
   (rx (seq bow
@@ -119,7 +119,7 @@
   "List of attributes used for MathProg sets, parameters and variables.")
 
 
-;;; Faces
+;;;; Faces
 
 (defface mathprog-ts-datavalue
   '((t :inherit font-lock-constant-face))
@@ -171,7 +171,7 @@
   :group 'mathprog-ts)
 
 
-;;; Font-Lock
+;;;; Font-Lock
 
 (defvar mathprog-ts-mode-feature-list
   ;; Level 1 usually contains only comments and definitions.
@@ -259,7 +259,7 @@
     ((ERROR) @mathprog-ts-warning)))
 
 
-;; Checking
+;;;; Checking
 
 (defun mathprog-ts-check-buffer ()
   "Check the MathProg model in the current buffer."
@@ -285,7 +285,7 @@
                  (next-error t t))))))))
 
 
-;; Language grammar
+;;;; Language grammar
 
 (defconst mathprog-ts-mode-treesit-language-source
   '(mathprog . ("https://github.com/smoeding/tree-sitter-mathprog"))
@@ -310,7 +310,7 @@ The function removes existing entries for the MathProg language in
   (treesit-install-language-grammar 'mathprog))
 
 
-;;; Major mode definition
+;;;; Major mode definition
 
 (defvar mathprog-ts-mode-syntax-table
   (let ((table (make-syntax-table)))
