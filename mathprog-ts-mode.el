@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-23 16:07:23 stm>
+;; Updated:          <2026-02-25 12:42:06 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -82,6 +82,18 @@
   :group 'mathprog-ts
   :type 'boolean
   :safe 'booleanp)
+
+(defcustom mathprog-ts-solver-program "glpsol"
+  "The program name of the MathProg solver to use."
+  :group 'mathprog-ts
+  :type 'string
+  :local t)
+
+(defcustom mathprog-ts-solver-check-args '("--check" "--math")
+  "List of arguments passed to the solver when checking a model."
+  :group 'mathprog-ts
+  :type '(list string)
+  :local t)
 
 
 ;;; Internals
@@ -247,6 +259,32 @@
     ((ERROR) @mathprog-ts-warning)))
 
 
+;; Checking
+
+(defun mathprog-ts-check-buffer ()
+  "Check the MathProg model in the current buffer."
+  (interactive)
+  (let* ((program (file-name-base mathprog-ts-solver-program))
+         (buffer (get-buffer-create (concat "*" program "*")))
+         (args (append (list mathprog-ts-solver-program nil buffer nil)
+                       mathprog-ts-solver-check-args
+                       (list (file-relative-name buffer-file-name)))))
+    (with-temp-buffer-window buffer nil nil
+      (with-current-buffer buffer
+        (buffer-disable-undo)
+        (let ((status (apply #'process-file args)))
+          (compilation-mode (upcase program))
+          (cond ((stringp status)
+                 (message "MathProg model check terminated with signal: %s"
+                          status))
+                ((zerop status)
+                 (message "MathProg model checked successfully"))
+                (t
+                 (message "MathProg model check failed")
+                 (setq next-error-last-buffer buffer)
+                 (next-error t t))))))))
+
+
 ;; Language grammar
 
 (defconst mathprog-ts-mode-treesit-language-source
@@ -303,12 +341,19 @@ The function removes existing entries for the MathProg language in
 
 (defvar mathprog-ts-mode-map
   (let ((map (make-sparse-keymap)))
+    (keymap-set map "C-c C-v" #'mathprog-ts-check-buffer)
     map)
   "Keymap for MathProg mode buffers.")
 
 ;;;###autoload
 (define-derived-mode mathprog-ts-mode prog-mode "MathProg"
   "Major mode for editing GNU MathProg files using Tree-sitter.
+\\<mathprog-ts-mode-map>
+The model in the current buffer can be checked by calling
+`mathprog-ts-check-buffer' (bound to \\[mathprog-ts-check-buffer]).
+The variable `mathprog-ts-solver-program' can be customized to choose
+the executable used for checking.  Also `mathprog-ts-solver-check-args'
+can be customized to set the arguments for checking the model file.
 
 The mode needs the Tree-sitter parser for MathProg code.  A parser
 suitable for the current package version can be installed using the
