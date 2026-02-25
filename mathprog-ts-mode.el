@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-25 16:45:06 stm>
+;; Updated:          <2026-02-25 16:47:46 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -256,7 +256,7 @@
     :feature error
     :language mathprog
     :override t
-    ((ERROR) @mathprog-ts-warning)))
+    ((ERROR) @font-lock-warning-face)))
 
 
 ;;;; Checking
