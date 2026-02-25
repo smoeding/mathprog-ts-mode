@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-25 16:47:46 stm>
+;; Updated:          <2026-02-25 16:48:31 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -288,7 +288,7 @@
 ;;;; Language grammar
 
 (defconst mathprog-ts-mode-treesit-language-source
-  '(mathprog . ("https://github.com/smoeding/tree-sitter-mathprog"))
+  '(mathprog . ("https://github.com/smoeding/tree-sitter-mathprog" "v1.0.0"))
   "The language source entry for the associated MathProg language parser.
 The value refers to the specific version of the parser that the mode has
 been tested with.  Using this mode with either an older or more recent
