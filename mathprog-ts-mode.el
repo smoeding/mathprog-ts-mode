@@ -4,7 +4,7 @@
 ;; Maintainer:       Stefan Möding <stm@kill-9.net>
 ;; Version:          0.1.0
 ;; Created:          <2026-01-06 19:55:01 stm>
-;; Updated:          <2026-02-25 12:57:02 stm>
+;; Updated:          <2026-02-25 16:45:06 stm>
 ;; URL:              https://github.com/smoeding/mathprog-ts-mode
 ;; Keywords:         languages
 ;; Package-Requires: ((emacs "29.1"))
@@ -326,16 +326,15 @@ The function removes existing entries for the MathProg language in
     ;; the backslash is our escape character
     (modify-syntax-entry ?\\ "\\" table)
     ;; various operators and punctuation
-    (modify-syntax-entry ?$  "." table)
-    (modify-syntax-entry ?%  "." table)
-    (modify-syntax-entry ?&  "." table)
-    (modify-syntax-entry ?+  "." table)
-    (modify-syntax-entry ?-  "." table)
-    (modify-syntax-entry ?<  "." table)
-    (modify-syntax-entry ?=  "." table)
-    (modify-syntax-entry ?>  "." table)
-    (modify-syntax-entry ?|  "." table)
-    (modify-syntax-entry ?\; "." table)
+    (modify-syntax-entry ?$ "." table)
+    (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?- "." table)
+    (modify-syntax-entry ?< "." table)
+    (modify-syntax-entry ?= "." table)
+    (modify-syntax-entry ?> "." table)
+    (modify-syntax-entry ?| "." table)
     table)
   "Syntax table used in `mathprog-ts-mode' buffers.")
 
